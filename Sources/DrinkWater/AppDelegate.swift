@@ -8,6 +8,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         setupStatusBar()
         startScheduler()
+
+        // 测试模式：DRINKWATER_TEST=1 立即弹窗
+        if ProcessInfo.processInfo.environment["DRINKWATER_TEST"] == "1" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                ReminderWindowController.shared.show()
+            }
+        }
     }
 
     // MARK: - 状态栏
@@ -16,7 +23,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         guard let button = statusItem?.button else { return }
         button.title = "💧"
-        button.toolTip = "喝水提醒 | 工作日 10:00-18:00 每整点提醒"
+        button.toolTip = "喝水提醒 | 工作日 10:00-17:00 每整点提醒"
 
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "立刻提醒我喝水 💧", action: #selector(forceRemind), keyEquivalent: ""))
