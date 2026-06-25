@@ -72,7 +72,7 @@ class ReminderView: NSView {
         addSubview(tipLabel)
 
         // 按钮
-        drankBtn.btnTitle = "喝了 ✅"
+        drankBtn.btnTitle = "我喝了！🙂"
         drankBtn.target = self
         drankBtn.action = #selector(drankTapped)
         addSubview(drankBtn)
@@ -206,13 +206,13 @@ class PillButton: NSButton {
     }
     required init?(coder: NSCoder) { fatalError() }
 
-    var btnTitle: String = "喝了 ✅" {
+    var btnTitle: String = "我喝了！🙂" {
         didSet { updateTitle() }
     }
 
     private func updateTitle() {
         let color = NSColor(calibratedRed: 0.10, green: 0.50, blue: 0.95, alpha: 1)
-        let attr = NSAttributedString(string: title, attributes: [
+        let attr = NSAttributedString(string: btnTitle, attributes: [
             .font: NSFont.boldSystemFont(ofSize: fontSize),
             .foregroundColor: color
         ])

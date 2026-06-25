@@ -24,6 +24,8 @@ DrinkWater is a lightweight macOS menu bar app. On weekdays (Mon–Fri) from 10:
 | 📐 | 忽视越久、窗口越大（压迫感拉满） | Window grows every 30 s if ignored |
 | 🎬 | 飞入 / 飞出入场动效 + 弹跳水杯 | Slide-in/out animation with bouncing cup |
 | 🖱️ | 手动触发「立刻提醒」 | Manual trigger from menu bar |
+| ↪️ | 弹窗不抢焦点，不打断当前操作 | Non-intrusive window — won't steal focus |
+| ⌨️ | ⌘1 全局快捷键关闭弹窗（可自定义） | Global hotkey ⌘1 to dismiss (customizable) |
 | 🖥️ | 优先显示在内置屏幕 | Prefers the built-in display |
 | ♻️ | 无沙盒、无通知权限依赖 | No sandbox, no notification permissions needed |
 
@@ -63,8 +65,8 @@ swift build -c release
 DrinkWater/
 ├── Sources/DrinkWater/
 │   ├── main.swift                  # 入口 / Entry point
-│   ├── AppDelegate.swift           # 状态栏 + 调度逻辑 / Menu bar & scheduler
-│   ├── ReminderWindowController.swift  # 窗口管理 + 膨胀逻辑 / Window & grow logic
+│   ├── AppDelegate.swift           # 状态栏 + 调度逻辑 + 快捷键设置 / Menu bar, scheduler & hotkey config
+│   ├── ReminderWindowController.swift  # 窗口管理 + 膨胀逻辑 + 全局快捷键 / Window, grow logic & global hotkey
 │   └── ReminderView.swift          # UI：卡片、水杯动画、按钮 / Card UI & animations
 ├── Package.swift
 ├── run.sh                          # 一键构建并运行 / Build & run script
@@ -78,8 +80,10 @@ DrinkWater/
 1. App 启动后以 `.accessory` 模式运行（不出现在 Dock）。
 2. 每分钟检查一次当前时间：工作日 + 整点 + 10:00–17:00 范围内则触发弹窗。
 3. 弹窗从左侧飞入，展示动态水杯动画。
-4. 若用户未响应，每 30 秒将窗口尺寸增大 80pt（宽高各），最大不超过屏幕尺寸。
-5. 点击「我喝了！」后窗口飞出关闭，等待下一个整点。
+4. 弹窗不抢焦点，不会打断你当前使用的应用。
+5. 全局快捷键（默认 ⌘1）在弹窗时注册，关闭时自动注销，可在菜单栏自由更改快捷键组合。
+6. 若用户未响应，每 30 秒将窗口尺寸增大 80pt（宽高各），最大不超过屏幕尺寸。
+7. 点击「我喝了！」后窗口飞出关闭，等待下一个整点。
 
 ---
 
@@ -92,6 +96,10 @@ DrinkWater/
 ```bash
 DRINKWATER_TEST=1 .build/debug/DrinkWater
 ```
+
+### 快捷键自定义
+
+弹窗默认可通过 ⌘1 关闭。点击菜单栏 💧 → 「关闭快捷键：⌘1」可在预设组合中切换，或选择「自定义快捷键…」在弹出窗口按任意新组合键设定。偏好设置自动保存在 `UserDefaults`。
 
 ---
 

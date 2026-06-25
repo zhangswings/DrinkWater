@@ -1,4 +1,104 @@
 import AppKit
+import Carbon
+
+// MARK: - 全局快捷键管理
+
+class HotkeyManager {
+    static var hotKeyRef: EventHotKeyRef?
+    static let hotKeyID = EventHotKeyID(signature: 0x44524E4B, id: 1)
+    static var isHandlerInstalled = false
+    fileprivate static var handler: (() -> Void)?
+    fileprivate static var eventHandlerRef: EventHandlerRef?
+
+    /// 安装一次 Carbon 事件处理器（永久有效）
+    static func installHandler(_ handle: @escaping () -> Void) {
+        handler = handle
+        guard !isHandlerInstalled else { return }
+        isHandlerInstalled = true
+
+        var eventSpec = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
+
+        InstallEventHandler(GetEventDispatcherTarget(), hotkeyCallback, 1, &eventSpec, nil, nil)
+    }
+
+    private static let hotkeyCallback: EventHandlerUPP = { _, event, _ -> OSStatus in
+        var hkID = EventHotKeyID()
+        let err = GetEventParameter(
+            event,
+            EventParamName(kEventParamDirectObject),
+            EventParamType(typeEventHotKeyID),
+            nil,
+            MemoryLayout<EventHotKeyID>.size,
+            nil,
+            &hkID
+        )
+        guard err == noErr, hkID.signature == 0x44524E4B else { return err }
+        DispatchQueue.main.async { handler?() }
+        return noErr
+    }
+
+    static func registerCurrent() {
+        unregister()
+        let kc = savedKeyCode()
+        let mod = savedModifiers()
+        let status = RegisterEventHotKey(kc, mod, hotKeyID, GetEventDispatcherTarget(), 0, &hotKeyRef)
+        if status != noErr {
+            print("HotKey registration failed: \(status)")
+        }
+    }
+
+    static func unregister() {
+        guard let ref = hotKeyRef else { return }
+        UnregisterEventHotKey(ref)
+        hotKeyRef = nil
+    }
+
+    // MARK: UserDefaults 存取
+
+    static func savedKeyCode() -> UInt32 {
+        let c = UserDefaults.standard.integer(forKey: "hk_keyCode")
+        return c > 0 ? UInt32(c) : 18           // default: '1'
+    }
+    static func savedModifiers() -> UInt32 {
+        let m = UserDefaults.standard.integer(forKey: "hk_modifiers")
+        return m > 0 ? UInt32(m) : UInt32(cmdKey)
+    }
+    static func save(keyCode: Int, modifiers: Int) {
+        UserDefaults.standard.set(keyCode, forKey: "hk_keyCode")
+        UserDefaults.standard.set(modifiers, forKey: "hk_modifiers")
+    }
+
+    // MARK: 显示文字
+
+    static func modifierString(_ m: UInt32) -> String {
+        var parts: [String] = []
+        if m & UInt32(cmdKey)    != 0 { parts.append("⌘") }
+        if m & UInt32(optionKey) != 0 { parts.append("⌥") }
+        if m & UInt32(controlKey) != 0 { parts.append("⌃") }
+        if m & UInt32(shiftKey)  != 0 { parts.append("⇧") }
+        return parts.joined()
+    }
+
+    static func keyName(_ code: UInt32) -> String {
+        let map: [UInt32: String] = [
+            18: "1", 19: "2", 20: "3", 21: "4", 22: "5",
+            23: "6", 24: "7", 25: "8", 26: "9", 27: "0",
+            0: "A", 1: "S", 2: "D", 3: "F", 4: "H",
+            5: "G", 6: "Z", 7: "X", 8: "C", 9: "V",
+            12: "Q", 13: "W", 14: "E", 15: "R", 16: "T",
+            17: "Y", 31: "O", 32: "U", 34: "I", 35: "P",
+            36: "⏎", 53: "⎋", 49: "Space",
+        ]
+        return map[code] ?? "key\(code)"
+    }
+
+    static var shortcutDisplay: String {
+        "\(modifierString(savedModifiers()))\(keyName(savedKeyCode()))"
+    }
+}
 
 class ReminderWindowController: NSWindowController {
     static let shared = ReminderWindowController()
@@ -20,7 +120,7 @@ class ReminderWindowController: NSWindowController {
         guard !alreadyShowing else { return }
         alreadyShowing = true
 
-        let screen = NSScreen.main ?? NSScreen.screens[0]
+        let screen = ReminderWindowController.builtInScreen()
         let screenFrame = screen.visibleFrame   // 不遮挡菜单栏
 
         // 初始大小
@@ -60,8 +160,7 @@ class ReminderWindowController: NSWindowController {
         var offFrame = initFrame
         offFrame.origin.x = -initW - 40
         win.setFrame(offFrame, display: false)
-        win.orderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        win.orderFrontRegardless()     // 不抢焦点
 
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.55
@@ -71,6 +170,12 @@ class ReminderWindowController: NSWindowController {
             // 入场后再做弹跳
             view.playBounce()
         }
+
+        // 注册全局快捷键（默认 ⌘1）
+        HotkeyManager.installHandler { [weak self] in
+            self?.dismiss()
+        }
+        HotkeyManager.registerCurrent()
 
         startGrowing()
     }
@@ -85,9 +190,8 @@ class ReminderWindowController: NSWindowController {
     }
 
     private func grow() {
-        guard let win = window,
-              let screen = NSScreen.main else { return }
-
+        guard let win = window else { return }
+        let screen = ReminderWindowController.builtInScreen()
         let screenFrame = screen.frame   // 膨胀时可以盖住菜单栏，更有压迫感
         let current = win.frame
 
@@ -120,11 +224,26 @@ class ReminderWindowController: NSWindowController {
         }
     }
 
+    // MARK: - 屏幕选择：优先内置屏幕，没有则用主屏
+
+    static func builtInScreen() -> NSScreen {
+        // macOS 内置屏幕的 displayID 可通过 CGDisplayIsBuiltin 判断
+        for screen in NSScreen.screens {
+            if let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID,
+               CGDisplayIsBuiltin(id) != 0 {
+                return screen
+            }
+        }
+        // 没有内置屏（台式机 / 所有外接）则回退到主屏
+        return NSScreen.main ?? NSScreen.screens[0]
+    }
+
     // MARK: - 关闭
 
     private func dismiss() {
         growTimer?.invalidate()
         growTimer = nil
+        HotkeyManager.unregister()
 
         guard let win = window else { return }
 
