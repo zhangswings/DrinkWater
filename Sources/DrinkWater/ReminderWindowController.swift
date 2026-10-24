@@ -60,7 +60,7 @@ class HotkeyManager {
 
     static func savedKeyCode() -> UInt32 {
         let c = UserDefaults.standard.integer(forKey: "hk_keyCode")
-        return c > 0 ? UInt32(c) : 18           // default: '1'
+        return UserDefaults.standard.object(forKey: "hk_keyCode") != nil && c >= 0 && c <= Int(UInt32.max) ? UInt32(c) : 18           // default: '1'
     }
     static func savedModifiers() -> UInt32 {
         let m = UserDefaults.standard.integer(forKey: "hk_modifiers")
