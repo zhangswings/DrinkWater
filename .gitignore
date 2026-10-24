@@ -31,3 +31,7 @@ Icon
 .vscode/
 .idea/
 *.iml
+
+# Release staging and distribution
+/build/
+/dist/

@@ -34,11 +34,25 @@ DrinkWater is a lightweight macOS menu bar app. On weekdays (Mon–Fri) from 10:
 ## 系统要求 / Requirements
 
 - macOS 13 Ventura 或更高版本
-- Swift 5.9+（随 Xcode 15+ 附带）
+- 安装预编译版本无需 Xcode 或 Swift；源码构建需要 Swift 5.9+（Xcode 15+）
 
 ---
 
-## 快速开始 / Quick Start
+## 下载与安装 / Download & Install
+
+前往 [Releases](https://github.com/zhangswings/DrinkWater/releases) 查看可用版本。首次发布尚未完成时，请使用下方源码运行方式。
+
+- **DMG（推荐）**：打开后，将 `DrinkWater.app` 拖入 `Applications`。
+- **ZIP**：解压后，将 `DrinkWater.app` 移入 `Applications`。
+
+从 Applications 启动，菜单栏出现 💧 即表示运行中。升级前先退出应用，再替换旧版本。
+架构支持和签名、公证状态以对应 Release Notes 为准。请下载 Release 附件，GitHub 自动生成的 Source code 是源码包。
+
+维护者请参阅 [macOS 发布流程](release/README.md)。
+
+---
+
+## 从源码运行 / Run from Source
 
 ```bash
 git clone https://github.com/zhangswings/DrinkWater.git
