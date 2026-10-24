@@ -12,5 +12,7 @@
 - [x] Add scripts/build-release.sh and package-release.sh with fail-fast behavior and isolated staging.
 - [x] Correct saved key-code zero handling in ReminderWindowController.swift.
 - [x] Update README, release/v0.1.0.md and release/README.md.
-- [ ] Run bash syntax validation, plist validation, Universal 2 build, signature and ZIP/DMG structure checks; record limitations.
+- [x] Run bash syntax validation, plist validation, Universal 2 build, signature and ZIP/DMG structure checks; record limitations.
 - [ ] Maintainer signs/notarizes and performs cross-machine/download checks before publication.
+
+Validation: Xcode 26.5; both slices minos 13.0; local ad-hoc signature and ZIP extraction verification passed; DMG integrity passed. Hotkey zero/normal/negative values checked against compiled implementation. Public signing/notarization and runtime/download acceptance remain untested. Reviewer findings for Bundle ID and source provenance were addressed.
