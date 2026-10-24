@@ -26,6 +26,8 @@ lipo "$app/Contents/MacOS/DrinkWater" -verify_arch arm64 x86_64
 xattr -cr "$app"
 # Local preview only. Public distribution must replace this ad-hoc signature.
 codesign --force --sign - "$app"
+xattr -cr "$app"
+codesign --verify --deep --strict --verbose=2 "$app"
 git rev-parse HEAD > build/release/source-commit.txt
 swift --version > build/release/toolchain.txt
 printf 'Built %s (%s): %s\n' "$VERSION" "$BUILD_NUMBER" "$app"

@@ -24,6 +24,8 @@ xcrun notarytool store-credentials DrinkWater-notary
 
 ## 构建与打包
 
+建议在未被 iCloud/其他文件提供器同步的目录构建；同步服务可能自动添加 FinderInfo 扩展属性导致签名验证失败。遇到此问题迁移构建目录后重建，不要绕过签名检查。
+
 在干净发布检出中执行（Xcode 15+，记录实际工具链）：
 
 ```bash
