@@ -22,6 +22,8 @@ cp packaging/Info.plist "$app/Contents/Info.plist"
 cp LICENSE "$app/Contents/Resources/LICENSE.txt"
 plutil -lint "$app/Contents/Info.plist"
 lipo "$app/Contents/MacOS/DrinkWater" -verify_arch arm64 x86_64
+# Remove Finder metadata copied from source files before signing.
+xattr -cr "$app"
 # Local preview only. Public distribution must replace this ad-hoc signature.
 codesign --force --sign - "$app"
 git rev-parse HEAD > build/release/source-commit.txt
